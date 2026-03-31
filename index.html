@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Student Mentor</title>
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        .form-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            justify-content: center;
+        }
+
+        .form-row input {
+            width: 200px;
+            padding: 8px;
+        }
+
+        @media (max-width: 800px) {
+            .form-row {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<h2>Student & Mentor System</h2>
+
+<!-- ROLE SELECTION -->
+<div id="home">
+    <h3>Select Role</h3>
+    <button onclick="showStudent()">Student</button>
+    <button onclick="showMentor()">Mentor</button>
+</div>
+<hr>
+
+<!-- STUDENT SECTION -->
+<div id="studentSection" style="display:none;">
+    <h3>Student</h3>
+
+    <button onclick="showStudentRegister()">Register</button>
+    <button onclick="showStudentLogin()">Login</button>
+
+    <div id="studentRegister" style="display:none;">
+        <h4>Student Register</h4>
+        <div class="form-row">
+            <input id="s_name" placeholder="Name">
+            <input id="s_email" placeholder="Email">
+        </div>
+        <div class="form-row">
+            <input id="s_password" type="password" placeholder="Password">
+            <input id="s_qualification" placeholder="Qualification">
+        </div>
+        <div class="form-row">
+            <input list="specializations" id="s_specialization" placeholder="Select Specialization" oninput="checkSpecialization()">
+            <input id="other_specialization" placeholder="Other specialization" style="display:none;">
+        </div>
+        <datalist id="specializations">
+            <option value="CSE">
+            <option value="ECE">
+            <option value="MECH">
+            <option value="CIVIL">
+            <option value="EEE">
+            <option value="Other">
+        </datalist>
+        <div class="form-row">
+            <input id="s_institute" placeholder="Institute Name">
+            <input id="s_year" placeholder="Year of Passout">
+        </div>
+        <button onclick="studentRegister()">Register</button>
+    </div>
+
+    <div id="studentLogin" style="display:none;">
+        <h4>Student Login</h4>
+        <input id="sl_email" placeholder="Email"><br><br>
+        <input id="sl_password" type="password" placeholder="Password"><br><br>
+        <button onclick="studentLogin()">Login</button>
+    </div>
+</div>
+
+<hr>
+
+<!-- MENTOR SECTION -->
+<div id="mentorSection" style="display:none;">
+    <h3>Mentor</h3>
+
+    <button onclick="showMentorRegister()">Register</button>
+    <button onclick="showMentorLogin()">Login</button>
+    <button onclick="checkStatus()">Check Status</button>
+
+    <div id="mentorRegister" style="display:none;">
+        <h4>Mentor Register</h4>
+        <div class="form-row">
+            <input id="m_name" placeholder="Name">
+            <input id="m_email" placeholder="Email">
+        </div>
+        <div class="form-row">
+            <input id="m_password" type="password" placeholder="Password">
+            <input list="mentorBackgroundOptions" id="m_background" placeholder="Select Background">
+        </div>
+        <datalist id="mentorBackgroundOptions">
+            <option value="CSE">
+            <option value="ECE">
+            <option value="EEE">
+            <option value="MECH">
+            <option value="CIVIL">
+        </datalist>
+        <div class="form-row">
+            <input id="m_linkedin" placeholder="LinkedIn Profile URL">
+            <input list="experienceOptions" id="m_experience" placeholder="Experience (Yes/No)" oninput="checkExperience()">
+            <datalist id="experienceOptions">
+                <option value="Yes">
+                <option value="No">
+            </datalist>
+        </div>
+        <div class="form-row">
+            <input id="m_experience_years" placeholder="Experience (years)" style="display:none;">
+        </div>
+        <button onclick="mentorRegister()">Register</button>
+    </div>
+
+    <div id="mentorLogin" style="display:none;">
+        <h4>Mentor Login</h4>
+        <input id="ml_email" placeholder="Email"><br><br>
+        <input id="ml_password" type="password" placeholder="Password"><br><br>
+        <button onclick="mentorLogin()">Login</button>
+    </div>
+</div>
+
+<script>
+function showStudent() {
+    document.getElementById("studentSection").style.display = "block";
+    document.getElementById("mentorSection").style.display = "none";
+}
+function showMentor() {
+    document.getElementById("mentorSection").style.display = "block";
+    document.getElementById("studentSection").style.display = "none";
+}
+function showStudentRegister() {
+    document.getElementById("studentRegister").style.display = "block";
+    document.getElementById("studentLogin").style.display = "none";
+}
+function showStudentLogin() {
+    document.getElementById("studentLogin").style.display = "block";
+    document.getElementById("studentRegister").style.display = "none";
+}
+function showMentorRegister() {
+    document.getElementById("mentorRegister").style.display = "block";
+    document.getElementById("mentorLogin").style.display = "none";
+}
+function showMentorLogin() {
+    document.getElementById("mentorLogin").style.display = "block";
+    document.getElementById("mentorRegister").style.display = "none";
+}
+
+function checkSpecialization() {
+    let value = document.getElementById("s_specialization").value;
+    if (value === "Other") {
+        document.getElementById("other_specialization").style.display = "block";
+    } else {
+        document.getElementById("other_specialization").style.display = "none";
+    }
+}
+function checkExperience() {
+    let value = document.getElementById("m_experience").value.toLowerCase();
+    if (value === "yes") {
+        document.getElementById("m_experience_years").style.display = "block";
+    } else {
+        document.getElementById("m_experience_years").style.display = "none";
+        document.getElementById("m_experience_years").value = "";
+    }
+}
+
+// STUDENT REGISTER
+function studentRegister() {
+    let email = document.getElementById("s_email").value;
+    let password = document.getElementById("s_password").value;
+    let qualification = document.getElementById("s_qualification").value;
+    let specialization = document.getElementById("s_specialization").value;
+    if (specialization === "Other") {
+        specialization = document.getElementById("other_specialization").value;
+    }
+    let institute = document.getElementById("s_institute").value;
+    let year = document.getElementById("s_year").value;
+
+    let users = JSON.parse(localStorage.getItem("students")) || [];
+    let exists = users.find(u => u.email === email);
+    if (exists) {
+        alert("Already registered ❌");
+        return;
+    }
+
+    users.push({ email, password, qualification, specialization, institute, year });
+    localStorage.setItem("students", JSON.stringify(users));
+    localStorage.setItem("studentEmail", email);
+    alert("Registered successfully ✅");
+    window.location.href = "doubts.html";
+}
+
+// STUDENT LOGIN
+function studentLogin() {
+    let email = document.getElementById("sl_email").value;
+    let password = document.getElementById("sl_password").value;
+    let users = JSON.parse(localStorage.getItem("students")) || [];
+    let valid = users.find(u => u.email === email && u.password === password);
+    if (valid) {
+        localStorage.setItem("studentEmail", email);
+        window.location.href = "doubts.html";
+    } else {
+        alert("Invalid login ❌");
+    }
+}
+
+// MENTOR REGISTER
+function mentorRegister() {
+    let name = document.getElementById("m_name").value;
+    let email = document.getElementById("m_email").value;
+    let password = document.getElementById("m_password").value;
+    let background = document.getElementById("m_background").value;
+    let linkedin = document.getElementById("m_linkedin").value;
+    let experience = document.getElementById("m_experience").value;
+    let experienceYears = document.getElementById("m_experience_years").value;
+
+    let mentors = JSON.parse(localStorage.getItem("mentors")) || [];
+    let exists = mentors.find(m => m.email === email);
+    if (exists) {
+        alert("Already registered ❌");
+        return;
+    }
+
+    mentors.push({
+        name, email, password, background, linkedin, experience, experienceYears, status: "Pending"
+    });
+
+    localStorage.setItem("mentors", JSON.stringify(mentors));
+    alert("Registered successfully ✅ (Wait for approval)");
+    window.location.href = "index.html";
+}
+
+// MENTOR LOGIN
+function mentorLogin() {
+    let email = document.getElementById("ml_email").value;
+    let password = document.getElementById("ml_password").value;
+
+    let mentors = JSON.parse(localStorage.getItem("mentors")) || [];
+    let valid = mentors.find(m => m.email === email && m.password === password && m.status === "Approved");
+
+   if (valid) {
+    localStorage.setItem("mentorEmail", valid.email);
+    localStorage.setItem("mentorName", valid.name);
+    localStorage.setItem("mentorLinkedIn", valid.linkedin); // ✅ MUST
+    window.location.href = "mentor.html";
+} else {
+        alert("Login failed ❌ (Wait for admin approval)");
+    }
+}
+
+// CHECK STATUS
+function checkStatus() {
+    let email = prompt("Enter your registered email:");
+    let mentors = JSON.parse(localStorage.getItem("mentors")) || [];
+    let user = mentors.find(m => m.email === email);
+    if (user) alert("Your status: " + user.status);
+    else alert("Mentor not found ❌");
+}
+</script>
+
+</body>
+</html>
