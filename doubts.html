@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Dashboard</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial;
+            background: url("background.jpg") no-repeat center center fixed;
+            background-size: cover;
+            color: white;
+            text-align: center;
+        }
+
+        h2 {
+            margin-top: 20px;
+        }
+
+        .card {
+            margin: 15px auto;
+            padding: 15px;
+            width: 60%;
+            border-radius: 10px;
+            background: rgba(0,0,0,0.5);
+            text-align: left;
+        }
+
+        .btn {
+            padding: 8px 15px;
+            margin: 5px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(to right, #00c6ff, #0072ff);
+            color: white;
+            cursor: pointer;
+        }
+
+        input {
+            padding: 8px;
+            width: 60%;
+            margin: 5px 0;
+        }
+
+        .status-pending {
+            color: yellow;
+        }
+
+        .status-answered {
+            color: lightgreen;
+        }
+
+        textarea {
+            width: 60%;
+            height: 60px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+
+<body>
+
+<h2>Student Dashboard</h2>
+
+<!-- ASK DOUBT -->
+<div class="card">
+    <h3>Ask a Doubt</h3>
+
+    <input id="question" placeholder="Enter your question"><br>
+
+    <button class="btn" onclick="submitDoubt()">Submit</button>
+</div>
+
+<div class="card">
+    <h3>⭐ Student Feedback</h3>
+
+    <p id="feedbackMsg"></p>
+
+    <div id="feedbackForm">
+
+        <select id="rating">
+            <option value="">Select Rating</option>
+            <option value="5">⭐⭐⭐⭐⭐ Excellent</option>
+            <option value="4">⭐⭐⭐⭐ Good</option>
+            <option value="3">⭐⭐⭐ Average</option>
+            <option value="2">⭐⭐ Poor</option>
+            <option value="1">⭐ Very Poor</option>
+        </select>
+
+        <br><br>
+
+        <!-- NEW SEARCH / WISH BOX -->
+        <input 
+            id="wish"
+            type="text"
+            placeholder="Write your suggestions / wishes..."
+            style="width:60%; padding:8px;"
+        >
+
+        <br><br>
+
+        <button class="btn" onclick="submitFeedback()">Submit Feedback</button>
+    </div>
+</div>
+
+<!-- DOUBTS LIST -->
+<h3>Your Doubts</h3>
+<div id="doubtList"></div>
+
+<button class="btn" onclick="logout()">Logout</button>
+
+<script>
+
+
+// CHECK IF FEEDBACK ALREADY GIVEN
+
+// CHECK FEEDBACK ON LOAD
+function checkFeedback() {
+    let email = localStorage.getItem("studentEmail");
+    let feedbacks = JSON.parse(localStorage.getItem("feedbacks")) || [];
+
+    let existing = feedbacks.find(f => f.email === email);
+
+    if (existing) {
+        document.getElementById("feedbackForm").style.display = "none";
+        document.getElementById("feedbackMsg").innerHTML =
+            "✅ You already submitted feedback. Thank you!";
+    }
+}
+
+// SUBMIT FEEDBACK
+function submitFeedback() {
+    let rating = document.getElementById("rating").value;
+    let wish = document.getElementById("wish").value.trim();
+    let email = localStorage.getItem("studentEmail");
+
+    if (!rating) {
+        alert("Please select rating ❌");
+        return;
+    }
+
+    if (!wish) {
+        alert("Please write your suggestion ❌");
+        return;
+    }
+
+    let feedbacks = JSON.parse(localStorage.getItem("feedbacks")) || [];
+
+    let already = feedbacks.find(f => f.email === email);
+    if (already) {
+        alert("You already submitted feedback ❌");
+        return;
+    }
+
+    feedbacks.push({
+        email: email,
+        rating: rating,
+        wish: wish,
+        date: new Date().toLocaleString()
+    });
+
+    localStorage.setItem("feedbacks", JSON.stringify(feedbacks));
+
+    alert("Thank you for your feedback ⭐");
+
+    checkFeedback();
+}
+
+// SUBMIT FEEDBACK
+
+
+function submitFeedback() {
+    let rating = document.getElementById("rating").value;
+    let wish = document.getElementById("wish").value.trim(); // optional
+    let email = localStorage.getItem("studentEmail");
+
+    if (!rating) {
+        alert("Please select rating ❌");
+        return;
+    }
+
+    let feedbacks = JSON.parse(localStorage.getItem("feedbacks")) || [];
+
+    let index = feedbacks.findIndex(f => f.email === email);
+
+    let feedbackData = {
+        email: email,
+        rating: rating,
+        wish: wish, // can be empty ""
+        date: new Date().toLocaleString()
+    };
+
+    if (index !== -1) {
+        // update existing
+        feedbacks[index] = feedbackData;
+    } else {
+        // new entry
+        feedbacks.push(feedbackData);
+    }
+
+    localStorage.setItem("feedbacks", JSON.stringify(feedbacks));
+
+    alert("Feedback submitted successfully ⭐");
+
+    loadFeedback();
+}
+// LOAD DOUBTS
+function loadDoubts() {
+    let studentEmail = localStorage.getItem("studentEmail");
+    let doubts = JSON.parse(localStorage.getItem("doubts")) || [];
+
+    let container = document.getElementById("doubtList");
+    container.innerHTML = "";
+
+    let myDoubts = doubts.filter(d => d.email === studentEmail);
+
+    if (myDoubts.length === 0) {
+        container.innerHTML = "<p>No doubts yet ❌</p>";
+        return;
+    }
+
+    myDoubts.forEach((d, index) => {
+
+        let statusClass = d.answer ? "status-answered" : "status-pending";
+        let statusText = d.answer ? "🟢 Answered" : "🟡 Pending";
+
+        let answerBlock = "";
+
+        if (d.answeredBy) {
+            if (d.answeredBy === "Admin") {
+                answerBlock = `
+                    <p><b>Answered By:</b> Admin</p>
+                `;
+            } else {
+                answerBlock = `
+                    <p><b>Answered By:</b> ${d.answeredBy}</p>
+                    <p><b>LinkedIn:</b>
+                        <a href="${d.linkedin}" target="_blank" style="color:#00c6ff;">
+                             ${d.linkedin}
+                        </a>
+                    </p>
+                `;
+            }
+        }
+
+        let div = document.createElement("div");
+        div.classList.add("card");
+
+        div.innerHTML = `
+            <p><b>Branch:</b> ${d.branch}</p>
+            <p><b>Question:</b> ${d.question}</p>
+
+            <p class="${statusClass}"><b>Status:</b> ${statusText}</p>
+
+            <p><b>Answer:</b> ${d.answer || "Waiting for mentor/admin..."}</p>
+
+            ${answerBlock}
+        `;
+
+        container.appendChild(div);
+    });
+}
+
+// SUBMIT DOUBT
+function submitDoubt() {
+    let question = document.getElementById("question").value.trim();
+    let email = localStorage.getItem("studentEmail");
+
+    if (!question) {
+        alert("Enter your question ❌");
+        return;
+    }
+
+    let students = JSON.parse(localStorage.getItem("students")) || [];
+    let student = students.find(s => s.email === email);
+
+    let branch = student ? student.specialization : "";
+
+    let doubts = JSON.parse(localStorage.getItem("doubts")) || [];
+
+    doubts.push({
+        email,
+        question,
+        branch,
+        answer: "",
+        answeredBy: "",
+        linkedin: ""
+    });
+
+    localStorage.setItem("doubts", JSON.stringify(doubts));
+
+    // update count
+    if (student) {
+        student.doubtsCount = (student.doubtsCount || 0) + 1;
+        localStorage.setItem("students", JSON.stringify(students));
+    }
+
+    document.getElementById("question").value = "";
+    loadDoubts();
+
+    alert("Doubt submitted ✅");
+}
+
+
+// LOGOUT
+function logout() {
+    localStorage.removeItem("studentEmail");
+    window.location.href = "index.html";
+}
+
+// INITIAL LOAD
+loadDoubts();
+
+</script>
+
+</body>
+</html>
