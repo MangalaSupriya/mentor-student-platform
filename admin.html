@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Panel</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial;
+            color: white;
+            text-align: center;
+            background: url("background.jpg") no-repeat center center fixed;
+            background-size: cover;
+        }
+
+        h2 {
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            margin: 10px;
+            border: none;
+            border-radius: 20px;
+            background: linear-gradient(to right, #00c6ff, #0072ff);
+            color: white;
+            cursor: pointer;
+        }
+
+        .card {
+            margin: 20px auto;
+            padding: 15px;
+            width: 60%;
+            border-radius: 10px;
+            background: rgba(0,0,0,0.4);
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- AUTH PAGE -->
+<div id="authPage">
+    <h2>ADMIN ACCESS</h2>
+    <button class="btn" onclick="showRegister()">Register</button>
+    <button class="btn" onclick="showLogin()">Login</button>
+</div>
+
+<!-- REGISTER -->
+<div id="registerPage" class="hidden">
+    <h2>Register</h2>
+    <input id="regUser" placeholder="Username"><br><br>
+    <input id="regPass" type="password" placeholder="Password"><br><br>
+    <button class="btn" onclick="register()">Submit</button>
+</div>
+
+<!-- LOGIN -->
+<div id="loginPage" class="hidden">
+    <h2>Login</h2>
+    <input id="logUser" placeholder="Username"><br><br>
+    <input id="logPass" type="password" placeholder="Password"><br><br>
+    <button class="btn" onclick="login()">Login</button>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard" class="hidden">
+    <h2>ADMIN DASHBOARD</h2>
+
+    <button class="btn" onclick="showStudents()">Student Data</button>
+    <button class="btn" onclick="showMentors()">Mentor Data</button>
+    <button class="btn" onclick="showDashboard()">Dashboard</button> <!-- ✅ ADDED -->
+    <button class="btn" onclick="showStudentDoubts()">Student Doubts</button>
+    <button class="btn" onclick="showFeedback()">Student Feedback</button>
+    <button class="btn" onclick="logout()">Logout</button>
+
+    <div id="dataSection"></div>
+</div>
+
+<script>
+
+    let newAdminSelected = false;
+function showFeedback() {
+    let feedbacks = JSON.parse(localStorage.getItem("feedbacks")) || [];
+
+    let container = document.getElementById("dataSection");
+    container.innerHTML = "<h2>⭐ Student Feedback</h2>";
+
+    if (feedbacks.length === 0) {
+        container.innerHTML += "<p>No feedback available ❌</p>";
+        return;
+    }
+
+    feedbacks.forEach((f, index) => {
+        container.innerHTML += `
+            <div class="card">
+                <p><b>Student Email:</b> ${f.email}</p>
+
+                <p><b>Rating:</b> ${"⭐".repeat(f.rating)}</p>
+
+                <p><b>Suggestion:</b> ${f.wish || "No suggestion given"}</p>
+
+                <p><b>Date:</b> ${f.date}</p>
+            </div>
+        `;
+    });
+}
+
+function showStudentDoubts() {
+    let doubts = JSON.parse(localStorage.getItem("doubts")) || [];
+    let students = JSON.parse(localStorage.getItem("students")) || [];
+
+    let container = document.getElementById("dataSection");
+    container.innerHTML = "<h2>📩 Other Specialization Doubts</h2>";
+
+    let found = false;
+
+    doubts.forEach((d, index) => {
+        let student = students.find(s => s.email === d.email);
+
+        if (student && !["cse","ece","eee","mech","civil"]
+            .includes(student.specialization.toLowerCase())) {
+
+            found = true;
+
+            container.innerHTML += `
+                <div class="card">
+                    <p><b>Email:</b> ${d.email}</p>
+                    <p><b>Question:</b> ${d.question}</p>
+
+                    <p><b>Status:</b> ${d.answer ? "🟢 Answered" : "🟡 Pending"}</p>
+
+                    <textarea id="adminAns${index}" placeholder="Type answer..."
+                        style="width:80%;height:60px;"></textarea><br><br>
+
+                    <button class="btn" onclick="adminAnswer(${index})">
+                        Submit Answer
+                    </button>
+
+                    <p><b>Answer:</b> ${d.answer || "Not answered yet"}</p>
+                    
+                </div>
+            `;
+        }
+    });
+
+    if (!found) {
+        container.innerHTML += "<p>No doubts found ❌</p>";
+    }
+}
+
+function adminAnswer(index) {
+    let doubts = JSON.parse(localStorage.getItem("doubts")) || [];
+
+    let ans = document.getElementById("adminAns" + index).value;
+
+    if (!ans) {
+        alert("Enter answer!");
+        return;
+    }
+
+    doubts[index].answer = ans;
+    doubts[index].answeredBy = "Admin";
+
+    localStorage.setItem("doubts", JSON.stringify(doubts));
+
+    alert("Answer submitted ✅");
+    showStudentDoubts();
+}
+// SHOW PAGES
+function showRegister() {
+    document.getElementById("authPage").classList.add("hidden");
+    document.getElementById("registerPage").classList.remove("hidden");
+}
+
+function showLogin() {
+    document.getElementById("authPage").classList.add("hidden");
+    document.getElementById("loginPage").classList.remove("hidden");
+}
+
+// REGISTER (ONLY ONE ADMIN)
+function register() {
+    let existingUser = localStorage.getItem("adminUser");
+
+    if (existingUser) {
+        alert("Admin already exists! Only one admin allowed.");
+        return;
+    }
+
+    let user = document.getElementById("regUser").value;
+    let pass = document.getElementById("regPass").value;
+
+    localStorage.setItem("adminUser", user);
+    localStorage.setItem("adminPass", pass);
+
+    alert("Registered Successfully!");
+}
+
+// LOGIN
+function login() {
+    let user = document.getElementById("logUser").value;
+    let pass = document.getElementById("logPass").value;
+
+    let storedUser = localStorage.getItem("adminUser");
+    let storedPass = localStorage.getItem("adminPass");
+
+    if (user === storedUser && pass === storedPass) {
+        document.getElementById("loginPage").classList.add("hidden");
+        document.getElementById("dashboard").classList.remove("hidden");
+    } else {
+        alert("Invalid Login!");
+    }
+}
+
+// STUDENTS
+function showStudents() {
+    let students = JSON.parse(localStorage.getItem("students")) || [];
+    let container = document.getElementById("dataSection");
+
+    container.innerHTML = "<h3>Students List</h3>";
+
+    students.forEach((s, index) => {
+        container.innerHTML += `
+            <div class="card">
+                <p><b>Email:</b> ${s.email}</p>
+                <p><b>Qualification:</b> ${s.qualification}</p>
+                <p><b>Specialization:</b> ${s.specialization}</p>
+                <button class="btn" onclick="deleteStudent(${index})">Delete</button>
+            </div>
+        `;
+    });
+}
+
+function deleteStudent(i) {
+    let students = JSON.parse(localStorage.getItem("students")) || [];
+
+    if (confirm("Delete this student?")) {
+        students.splice(i, 1);
+        localStorage.setItem("students", JSON.stringify(students));
+        showStudents();
+    }
+}
+
+// MENTORS
+function showMentors() {
+    let mentors = JSON.parse(localStorage.getItem("mentors")) || [];
+    let container = document.getElementById("dataSection");
+
+    container.innerHTML = "<h3>Mentors List</h3>";
+
+    mentors.forEach((m, index) => {
+        container.innerHTML += `
+            <div class="card">
+                <p><b>Email:</b> ${m.email}</p>
+                <p><b>Background:</b> ${m.background}</p>
+
+                <p><b>LinkedIn:</b> 
+                    ${m.linkedin ? `<a href="${m.linkedin}" target="_blank" style="color:#00c6ff;">${m.linkedin}</a>` : "-"}
+                </p>
+
+                <p><b>Experience:</b> 
+                    ${m.experience === "Yes" ? m.experienceYears + " years" : "No Experience"}
+                </p>
+
+                <p><b>Status:</b> ${m.status}</p>
+
+                <button class="btn" onclick="approve(${index})">Approve</button>
+                <button class="btn" onclick="reject(${index})">Reject</button>
+                <button class="btn" onclick="makeAdmin(${index})">Make Admin</button>
+                <button class="btn" onclick="deleteMentor(${index})">Delete</button>
+            </div>
+        `;
+    });
+}
+
+// APPROVE
+function approve(i) {
+    let mentors = JSON.parse(localStorage.getItem("mentors"));
+    mentors[i].status = "Approved";
+    localStorage.setItem("mentors", JSON.stringify(mentors));
+    showMentors();
+}
+
+// REJECT
+function reject(i) {
+    let mentors = JSON.parse(localStorage.getItem("mentors"));
+    mentors[i].status = "Rejected";
+    localStorage.setItem("mentors", JSON.stringify(mentors));
+    showMentors();
+}
+
+// MAKE ADMIN
+function makeAdmin(i) {
+    let mentors = JSON.parse(localStorage.getItem("mentors")) || [];
+
+    let selected = mentors[i];
+
+    localStorage.setItem("adminUser", selected.email);
+    localStorage.setItem("adminPass", selected.password);
+
+    newAdminSelected = true;
+
+    alert("New Admin Assigned ✅");
+}
+
+// DELETE
+function deleteMentor(i) {
+    let mentors = JSON.parse(localStorage.getItem("mentors")) || [];
+
+    if (confirm("Delete this mentor?")) {
+        mentors.splice(i, 1);
+        localStorage.setItem("mentors", JSON.stringify(mentors));
+        showMentors();
+    }
+}
+
+// LOGOUT
+function logout() {
+    if (newAdminSelected === false) {
+        alert("⚠️ Please assign a mentor as new admin before logout!");
+        return;
+    }
+
+    document.getElementById("dashboard").classList.add("hidden");
+    document.getElementById("authPage").classList.remove("hidden");
+
+    alert("Logged out successfully ✅");
+}
+
+function makeAdmin(i) {
+    let mentors = JSON.parse(localStorage.getItem("mentors")) || [];
+
+    let selected = mentors[i];
+
+    localStorage.setItem("adminUser", selected.email);
+    localStorage.setItem("adminPass", selected.password);
+
+    newAdminSelected = true;   // ✔ NOW IT WILL WORK
+
+    alert("New Admin Assigned ✅");
+}
+
+//////////////////////////////////////////////////////
+// ✅ DASHBOARD FUNCTION (ADDED ONLY)
+//////////////////////////////////////////////////////
+
+function showDashboard() {
+    let students = JSON.parse(localStorage.getItem("students")) || [];
+    let mentors = JSON.parse(localStorage.getItem("mentors")) || [];
+
+    let container = document.getElementById("dataSection");
+
+    container.innerHTML = "<h2>📊 Dashboard</h2>";
+
+    students.sort((a, b) => (b.doubtsCount || 0) - (a.doubtsCount || 0));
+    mentors.sort((a, b) => (b.answerCount || 0) - (a.answerCount || 0));
+
+    container.innerHTML += "<h3>🏆 Top Students</h3>";
+
+    if (students.length === 0) {
+        container.innerHTML += "<p>No student data</p>";
+    } else {
+        students.slice(0, 3).forEach((s, i) => {
+            container.innerHTML += `
+                <div class="card">
+                    <h3>#${i+1}</h3>
+                    <p><b>Email:</b> ${s.email}</p>
+                    <p><b>Doubts Asked:</b> ${s.doubtsCount || 0}</p>
+                    
+                </div>
+            `;
+        });
+    }
+
+    container.innerHTML += "<h3>👑 Top Mentors</h3>";
+
+    if (mentors.length === 0) {
+        container.innerHTML += "<p>No mentor data</p>";
+    } else {
+        mentors.slice(0, 3).forEach((m, i) => {
+            container.innerHTML += `
+                <div class="card">
+                    <h3>#${i+1}</h3>
+                    <p><b>Email:</b> ${m.email}</p>
+                    <p><b>Answers Given:</b> ${m.answerCount || 0}</p>
+                </div>
+            `;
+        });
+    }
+}
+
+</script>
+
+</body>
+</html>
