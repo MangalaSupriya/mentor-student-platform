@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mentor Dashboard</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial;
+            background: url("background.jpg") no-repeat center center fixed;
+            background-size: cover;
+            color: white;
+            text-align: center;
+        }
+        .card {
+            margin: 15px auto;
+            padding: 15px;
+            width: 60%;
+            border-radius: 10px;
+            background: rgba(0,0,0,0.5);
+        }
+        .btn {
+            padding: 8px 15px;
+            margin: 5px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(to right, #00c6ff, #0072ff);
+            color: white;
+            cursor: pointer;
+        }
+        input {
+            padding: 5px;
+            width: 60%;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Mentor Dashboard</h2>
+<div id="doubtList"></div>
+
+<script>
+function loadDoubts() {
+    let mentorEmail = localStorage.getItem("mentorEmail");
+    let mentors = JSON.parse(localStorage.getItem("mentors")) || [];
+    let doubts = JSON.parse(localStorage.getItem("doubts")) || [];
+
+    let mentor = mentors.find(m => m.email === mentorEmail);
+
+    let container = document.getElementById("doubtList");
+    container.innerHTML = "";
+
+    if (!mentor) {
+        container.innerHTML = "<p>No mentor found ❌</p>";
+        return;
+    }
+
+    // ✅ BLOCK "Other" doubts
+    let filtered = doubts.filter(d => 
+        d.branch === mentor.background && d.branch !== "Other"
+    );
+
+    if (filtered.length === 0) {
+        container.innerHTML = "<p>No doubts for your branch ✅</p>";
+        return;
+    }
+
+    filtered.forEach(d => {
+        let realIndex = doubts.indexOf(d);
+        let div = document.createElement("div");
+        div.classList.add("card");
+        div.innerHTML = `
+            <p><b>Student:</b> ${d.email}</p>
+            <p><b>Branch:</b> ${d.branch}</p>
+            <p><b>Q:</b> ${d.question}</p>
+            <input id="ans${realIndex}" placeholder="Type answer...">
+
+            ${
+                d.answer 
+                ? `<button class="btn" disabled>Answered</button>` 
+                : `<button class="btn" onclick="submitAnswer(${realIndex})">Submit</button>`
+            }
+
+            <p><b>A:</b> ${d.answer || "No answer yet"}</p>
+        `;
+        container.appendChild(div);
+    });
+}
+
+function submitAnswer(index) {
+    let doubts = JSON.parse(localStorage.getItem("doubts")) || [];
+    let mentors = JSON.parse(localStorage.getItem("mentors")) || [];
+
+    let answer = document.getElementById("ans" + index).value;
+    let mentorEmail = localStorage.getItem("mentorEmail");
+
+    let mentor = mentors.find(m => m.email === mentorEmail);
+
+    if (answer) {
+
+        // ❌ prevent duplicate answer
+        if (doubts[index].answer) {
+            alert("Already answered ❌");
+            return;
+        }
+
+        doubts[index].answer = answer;
+        doubts[index].answeredBy = mentor.name + " (" + mentor.email + ")";
+        doubts[index].linkedin = mentor.linkedin;
+
+        // 🔥 tracking
+        mentor.answerCount = (mentor.answerCount || 0) + 1;
+
+        if (!mentor.studentsHelped) mentor.studentsHelped = [];
+
+        if (!mentor.studentsHelped.includes(doubts[index].email)) {
+            mentor.studentsHelped.push(doubts[index].email);
+        }
+
+        localStorage.setItem("doubts", JSON.stringify(doubts));
+        localStorage.setItem("mentors", JSON.stringify(mentors));
+
+        alert("Answer submitted ✅");
+        loadDoubts();
+    } else {
+        alert("Enter answer ❌");
+    }
+}
+
+loadDoubts();
+</script>
+
+</body>
+</html>
